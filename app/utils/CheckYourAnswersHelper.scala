@@ -22,4 +22,12 @@ import pages._
 import viewmodels.{AnswerRow, RepeaterAnswerRow, RepeaterAnswerSection}
 
 class CheckYourAnswersHelper(userAnswers: UserAnswers) {
+
+  def ipo: Option[AnswerRow] = userAnswers.get(IpoPage) map {
+    x => AnswerRow("ipo.checkYourAnswersLabel", s"$x", false, routes.IpoController.onPageLoad(CheckMode).url)
+  }
+
+  def goods: Option[AnswerRow] = userAnswers.get(GoodsPage) map {
+    x => AnswerRow("goods.checkYourAnswersLabel", s"$x", false, routes.GoodsController.onPageLoad(CheckMode).url)
+  }
 }

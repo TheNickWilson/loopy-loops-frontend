@@ -26,6 +26,8 @@ trait UserDataGenerator {
   self: Generators =>
 
   val generators: Seq[Gen[(Page, JsValue)]] =
+    arbitrary[(IpoPage.type, JsValue)] ::
+    arbitrary[(GoodsPage.type, JsValue)] ::
     Nil
 
   implicit lazy val arbitraryUserData: Arbitrary[UserData] =

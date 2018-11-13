@@ -42,3 +42,15 @@ site.textarea.char_limit = (Limit is {0} characters)
 
 unauthorised.title = You can’t access this service with this account
 unauthorised.heading = You can’t access this service with this account
+
+goods.title = goods
+goods.heading = goods
+goods.checkYourAnswersLabel = goods
+goods.error.required = Enter goods
+goods.error.length = Goods must be 100 characters or less
+
+ipo.title = ipo
+ipo.heading = ipo
+ipo.checkYourAnswersLabel = ipo
+ipo.error.required = Enter ipo
+ipo.error.length = Ipo must be 100 characters or less

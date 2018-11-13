@@ -14,16 +14,9 @@
  * limitations under the License.
  */
 
-package generators
+package pages
 
-import org.scalacheck.Arbitrary
-import pages._
+case object IpoPage extends QuestionPage[String] {
 
-trait PageGenerators {
-
-  implicit lazy val arbitraryIpoPage: Arbitrary[IpoPage.type] =
-    Arbitrary(IpoPage)
-
-  implicit lazy val arbitraryGoodsPage: Arbitrary[GoodsPage.type] =
-    Arbitrary(GoodsPage)
+  override def toString: String = "ipo"
 }
