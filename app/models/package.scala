@@ -18,6 +18,12 @@ import play.api.libs.json._
 
 package object models {
 
+  implicit class RichJsObject(jsObject: JsObject) {
+
+    def setObject(path: JsPath, value: JsValue): JsResult[JsObject] =
+      jsObject.set(path, value).flatMap(_.validate[JsObject])
+  }
+
   implicit class RichJsValue(jsValue: JsValue) {
 
     def set(path: JsPath, value: JsValue): JsResult[JsValue] =
@@ -26,6 +32,9 @@ package object models {
         case (Nil, _) =>
           JsError("path cannot be empty")
 
+        case ((r: RecursiveSearch) :: _, _) =>
+          JsError("recursive search not supported")
+
         case ((n: IdxPathNode) :: Nil, _) =>
           setIndexNode(n, jsValue, value)
 
@@ -33,12 +42,27 @@ package object models {
           setKeyNode(n, jsValue, value)
 
         case (node :: rest, oldValue) =>
-          JsPath(node :: Nil).json.pick[JsValue].reads(oldValue).flatMap {
-            _.set(JsPath(rest), value).flatMap {
-              newValue =>
-                set(JsPath(node :: Nil), newValue)
+          Reads.optionNoError(Reads.at[JsValue](JsPath(node :: Nil)))
+            .reads(oldValue).flatMap {
+              _.map {
+                  _.set(JsPath(rest), value).flatMap {
+                    newValue =>
+                      set(JsPath(node :: Nil), newValue)
+                  }
+                }.getOrElse {
+                  rest match {
+
+                    case KeyPathNode(key) :: Nil =>
+                      set(JsPath(node :: Nil), Json.obj(key -> value))
+
+                    case (i: IdxPathNode) :: Nil =>
+                      set(JsPath(node :: Nil), Json.arr(value))
+
+                    case _ =>
+                      JsError("recursive search not supported")
+                  }
+                }
             }
-          }
       }
 
     private def setIndexNode(node: IdxPathNode, oldValue: JsValue, newValue: JsValue): JsResult[JsValue] = {

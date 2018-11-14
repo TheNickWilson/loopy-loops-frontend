@@ -173,5 +173,29 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks wit
 
       value.set(path, JsString("fork")) mustEqual JsError("array index out of bounds: 3, [\"bar\",\"baz\"]")
     }
+
+    "must set into an array which does not exist" in {
+
+      val value = Json.obj()
+
+      val path = JsPath \ "foo" \ 0
+
+      value.set(path, JsString("bar")) mustEqual JsSuccess(Json.obj(
+        "foo" -> Json.arr("bar")
+      ))
+    }
+
+    "must set into an object which does not exist" in {
+
+      val value = Json.obj()
+
+      val path = JsPath \ "foo" \ "bar"
+
+      value.set(path, JsString("baz")) mustEqual JsSuccess(Json.obj(
+        "foo" -> Json.obj(
+          "bar" -> "baz"
+        )
+      ))
+    }
   }
 }
