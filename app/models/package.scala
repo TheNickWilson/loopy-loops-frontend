@@ -26,20 +26,49 @@ package object models {
         case (Nil, _) =>
           JsError("path cannot be empty")
 
-        case (IdxPathNode(index) :: _, oldValue: JsArray) if index >= 0 && index <= oldValue.value.length =>
-          JsSuccess(oldValue.append(value))
+        case ((n: IdxPathNode) :: Nil, _) =>
+          setIndexNode(n, jsValue, value)
 
-        case (IdxPathNode(index) :: _, oldValue: JsArray) =>
-          JsError("array index out of bounds")
+        case ((n: KeyPathNode) :: Nil, _) =>
+          setKeyNode(n, jsValue, value)
 
-        case (IdxPathNode(_) :: _, oldValue) =>
+        case (node :: rest, oldValue) =>
+          JsPath(node :: Nil).json.pick[JsValue].reads(oldValue).flatMap {
+            _.set(JsPath(rest), value).flatMap {
+              newValue =>
+                set(JsPath(node :: Nil), newValue)
+            }
+          }
+      }
+
+    private def setIndexNode(node: IdxPathNode, oldValue: JsValue, newValue: JsValue): JsResult[JsValue] = {
+
+      val index = node.idx
+
+      oldValue match {
+        case oldValue: JsArray if index >= 0 && index <= oldValue.value.length =>
+          if (index == oldValue.value.length) {
+            JsSuccess(oldValue.append(newValue))
+          } else {
+            JsSuccess(JsArray(oldValue.value.updated(index, newValue)))
+          }
+        case oldValue: JsArray =>
+          JsError(s"array index out of bounds: $index, $oldValue")
+        case _ =>
           JsError(s"cannot set an index on $oldValue")
+      }
+    }
 
-        case (KeyPathNode(key) :: _, oldValue: JsObject) =>
-          JsSuccess(oldValue + (key -> value))
+    private def setKeyNode(node: KeyPathNode, oldValue: JsValue, newValue: JsValue): JsResult[JsValue] = {
 
-        case (KeyPathNode(_) :: _, oldValue) =>
+      val key = node.key
+
+      oldValue match {
+        case oldValue: JsObject =>
+          JsSuccess(oldValue + (key -> newValue))
+        case _ =>
           JsError(s"cannot set a key on $oldValue")
       }
+    }
   }
 }

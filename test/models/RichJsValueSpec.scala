@@ -18,12 +18,14 @@ package models
 
 import org.scalacheck.{Gen, Shrink}
 import org.scalatest.prop.PropertyChecks
-import org.scalatest.{FreeSpec, MustMatchers}
+import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
 import play.api.libs.json._
 
-class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
+class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks with OptionValues {
 
   implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
+
+  val nonEmptyAlphaStr: Gen[String] = Gen.alphaStr.suchThat(_.nonEmpty)
 
   "set" - {
 
@@ -37,10 +39,10 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
     "must set a value on a JsObject" in {
 
       val gen = for {
-        originalKey   <- Gen.alphaStr suchThat (_.nonEmpty)
-        originalValue <- Gen.alphaStr suchThat (_.nonEmpty)
-        pathKey       <- Gen.alphaStr suchThat (_.nonEmpty) suchThat (_ != originalKey)
-        newValue      <- Gen.alphaStr suchThat (_.nonEmpty)
+        originalKey   <- nonEmptyAlphaStr
+        originalValue <- nonEmptyAlphaStr
+        pathKey       <- nonEmptyAlphaStr suchThat (_ != originalKey)
+        newValue      <- nonEmptyAlphaStr
       } yield (originalKey, originalValue, pathKey, newValue)
 
       forAll(gen) {
@@ -54,9 +56,24 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
       }
     }
 
+    "must set a nested value on a JsObject" in {
+
+      val value = Json.obj(
+        "foo" -> Json.obj()
+      )
+
+      val path = JsPath \ "foo" \ "bar"
+
+      value.set(path, JsString("baz")).asOpt.value mustEqual Json.obj(
+        "foo" -> Json.obj(
+          "bar" -> "baz"
+        )
+      )
+    }
+
     "must add a value to an empty JsArray" in {
 
-      forAll(Gen.alphaStr suchThat (_.nonEmpty)) {
+      forAll(nonEmptyAlphaStr) {
         newValue =>
 
           val value = Json.arr()
@@ -67,20 +84,47 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
       }
     }
 
-    "must add a value to the end of a JsArray" ignore {
+    "must add a value to the end of a JsArray" in {
 
+      forAll(nonEmptyAlphaStr, nonEmptyAlphaStr) {
+        (oldValue, newValue) =>
+
+          val value = Json.arr(oldValue)
+
+          val path = JsPath \ 1
+
+          value.set(path, JsString(newValue)) mustEqual JsSuccess(Json.arr(oldValue, newValue))
+      }
     }
 
-    "must change a value in an existing JsArray" ignore {
+    "must change a value in an existing JsArray" in {
 
+      forAll(nonEmptyAlphaStr, nonEmptyAlphaStr, nonEmptyAlphaStr) {
+        (firstValue, secondValue, newValue) =>
+
+          val value = Json.arr(firstValue, secondValue)
+
+          val path = JsPath \ 0
+
+          value.set(path, JsString(newValue)) mustEqual JsSuccess(Json.arr(newValue, secondValue))
+      }
+    }
+
+    "must set a nested value on a JsArray" in {
+
+      val value = Json.arr(Json.arr("foo"))
+
+      val path = JsPath \ 0 \ 0
+
+      value.set(path, JsString("bar")).asOpt.value mustEqual Json.arr(Json.arr("bar"))
     }
 
     "must change the value of an existing key" in {
 
       val gen = for {
-        originalKey   <- Gen.alphaStr suchThat (_.nonEmpty)
-        originalValue <- Gen.alphaStr suchThat (_.nonEmpty)
-        newValue      <- Gen.alphaStr suchThat (_.nonEmpty)
+        originalKey   <- nonEmptyAlphaStr
+        originalValue <- nonEmptyAlphaStr
+        newValue      <- nonEmptyAlphaStr
       } yield (originalKey, originalValue, newValue)
 
       forAll(gen) {
@@ -118,7 +162,7 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
 
       val path = JsPath \ 1
 
-      value.set(path, JsString("bar")) mustEqual JsError("array index out of bounds")
+      value.set(path, JsString("bar")) mustEqual JsError("array index out of bounds: 1, []")
     }
 
     "must return an error when trying to set an index out of bounds" in {
@@ -127,7 +171,7 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks {
 
       val path = JsPath \ 3
 
-      value.set(path, JsString("fork")) mustEqual JsError("array index out of bounds")
+      value.set(path, JsString("fork")) mustEqual JsError("array index out of bounds: 3, [\"bar\",\"baz\"]")
     }
   }
 }
