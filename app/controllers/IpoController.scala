@@ -44,31 +44,35 @@ class IpoController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData) {
+  def onPageLoad(ipoIndex: Int, mode: Mode): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.getOrElse(UserAnswers(request.internalId)).get(IpoPage) match {
+      val userAnswers =
+        request.userAnswers.getOrElse(UserAnswers(request.internalId))
+
+      val preparedForm = userAnswers.get(IpoPage(ipoIndex)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, mode))
+      Ok(view(ipoIndex, preparedForm, mode))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData).async {
+  def onSubmit(ipoIndex: Int, mode: Mode): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
+
+      val userAnswers =
+        request.userAnswers.getOrElse(UserAnswers(request.internalId))
 
       form.bindFromRequest().fold(
         (formWithErrors: Form[_]) =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+          Future.successful(BadRequest(view(ipoIndex, formWithErrors, mode))),
 
         value => {
-          val updatedAnswers = request.userAnswers.getOrElse(UserAnswers(request.internalId)).set(IpoPage, value)
-
-          sessionRepository.set(updatedAnswers.userData).map(
-            _ =>
-              Redirect(navigator.nextPage(IpoPage, mode)(updatedAnswers))
-          )
+          for {
+            updatedAnswers <- Future.fromTry(userAnswers.set(IpoPage(ipoIndex), value))
+            _              <- sessionRepository.set(updatedAnswers)
+          } yield Redirect(navigator.nextPage(IpoPage(ipoIndex), mode)(updatedAnswers))
         }
       )
   }

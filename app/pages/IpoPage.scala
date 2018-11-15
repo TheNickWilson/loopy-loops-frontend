@@ -15,8 +15,10 @@
  */
 
 package pages
+import play.api.libs.json.JsPath
 
-case object IpoPage extends QuestionPage[String] {
+final case class IpoPage(index: Int) extends QuestionPage[String] {
 
+  override def path: JsPath = JsPath \ "ipo" \ index \ "name"
   override def toString: String = "ipo"
 }

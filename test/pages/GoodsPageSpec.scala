@@ -23,10 +23,10 @@ class GoodsPageSpec extends PageBehaviours {
 
   "GoodsPage" must {
 
-    beRetrievable[String](GoodsPage)
+    beRetrievable[String](GoodsPage(0, 0))
 
-    beSettable[String](GoodsPage)
+    beSettable[String](GoodsPage(0, 0))
 
-    beRemovable[String](GoodsPage)
+    beRemovable[String](GoodsPage(0, 0))
   }
 }

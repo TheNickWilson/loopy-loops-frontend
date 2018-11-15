@@ -197,5 +197,22 @@ class RichJsValueSpec extends FreeSpec with MustMatchers with PropertyChecks wit
         )
       ))
     }
+
+    "must set nested objects and arrays" in {
+
+      val value = Json.obj()
+
+      val path = JsPath \ "foo" \ 0 \ "bar" \ 0
+
+      value.set(path, JsString("baz")) mustEqual JsSuccess(Json.obj(
+        "foo" -> Json.arr(
+          Json.obj(
+            "bar" -> Json.arr(
+              "baz"
+            )
+          )
+        )
+      ))
+    }
   }
 }

@@ -32,17 +32,17 @@ class GoodsViewSpec extends StringViewBehaviours {
 
   "GoodsView view" must {
 
-    val application = applicationBuilder(userData = Some(emptyUserData)).build()
+    val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
 
     val view = application.injector.instanceOf[GoodsView]
 
     def applyView(form: Form[_]): HtmlFormat.Appendable =
-      view.apply(form, NormalMode)(fakeRequest, messages)
+      view.apply(1, 2, form, NormalMode)(fakeRequest, messages)
 
     behave like normalPage(applyView(form), messageKeyPrefix)
 
     behave like pageWithBackLink(applyView(form))
 
-    behave like stringPage(form, applyView, messageKeyPrefix, routes.GoodsController.onSubmit(NormalMode).url)
+    behave like stringPage(form, applyView, messageKeyPrefix, routes.GoodsController.onSubmit(1, 2, NormalMode).url)
   }
 }

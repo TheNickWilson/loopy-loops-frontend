@@ -16,7 +16,10 @@
 
 package pages
 
-case object GoodsPage extends QuestionPage[String] {
+import play.api.libs.json.JsPath
 
+final case class GoodsPage(ipoIndex: Int, goodsIndex: Int) extends QuestionPage[String] {
+
+  override def path: JsPath = JsPath \ "ipo" \ ipoIndex \ "goods" \ goodsIndex
   override def toString: String = "goods"
 }

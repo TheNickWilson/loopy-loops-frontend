@@ -22,13 +22,13 @@
     formHelper: FormWithCSRF
 )
 
-@(form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
+@(ipoIndex: Int, form: Form[_], mode: Mode)(implicit request: Request[_], messages: Messages)
 
 @main_template(
     title = s"${errorPrefix(form)} ${messages("ipo.title")}"
     ) {
 
-    @formHelper(action = IpoController.onSubmit(mode), 'autoComplete -> "off") {
+    @formHelper(action = IpoController.onSubmit(ipoIndex, mode), 'autoComplete -> "off") {
 
         @components.back_link()
 

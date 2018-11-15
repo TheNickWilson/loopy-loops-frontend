@@ -12,12 +12,12 @@ GET        /check-your-answers                          controllers.CheckYourAns
 
 GET        /unauthorised                                controllers.UnauthorisedController.onPageLoad
 
-GET        /goods                        controllers.GoodsController.onPageLoad(mode: Mode = NormalMode)
-POST       /goods                        controllers.GoodsController.onSubmit(mode: Mode = NormalMode)
-GET        /changeGoods                  controllers.GoodsController.onPageLoad(mode: Mode = CheckMode)
-POST       /changeGoods                  controllers.GoodsController.onSubmit(mode: Mode = CheckMode)
+GET        /goods/:ipoIndex/:goodsIndex                        controllers.GoodsController.onPageLoad(ipoIndex: Int, goodsIndex: Int, mode: Mode = NormalMode)
+POST       /goods/:ipoIndex/:goodsIndex                        controllers.GoodsController.onSubmit(ipoIndex: Int, goodsIndex: Int, mode: Mode = NormalMode)
+GET        /changeGoods/:ipoIndex/:goodsIndex                  controllers.GoodsController.onPageLoad(ipoIndex: Int, goodsIndex: Int, mode: Mode = CheckMode)
+POST       /changeGoods/:ipoIndex/:goodsIndex                  controllers.GoodsController.onSubmit(ipoIndex: Int, goodsIndex: Int, mode: Mode = CheckMode)
 
-GET        /ipo                        controllers.IpoController.onPageLoad(mode: Mode = NormalMode)
-POST       /ipo                        controllers.IpoController.onSubmit(mode: Mode = NormalMode)
-GET        /changeIpo                  controllers.IpoController.onPageLoad(mode: Mode = CheckMode)
-POST       /changeIpo                  controllers.IpoController.onSubmit(mode: Mode = CheckMode)
+GET        /ipo/:ipoIndex                        controllers.IpoController.onPageLoad(ipoIndex: Int, mode: Mode = NormalMode)
+POST       /ipo/:ipoIndex                        controllers.IpoController.onSubmit(ipoIndex: Int, mode: Mode = NormalMode)
+GET        /changeIpo/:ipoIndex                  controllers.IpoController.onPageLoad(ipoIndex: Int, mode: Mode = CheckMode)
+POST       /changeIpo/:ipoIndex                  controllers.IpoController.onSubmit(ipoIndex: Int, mode: Mode = CheckMode)

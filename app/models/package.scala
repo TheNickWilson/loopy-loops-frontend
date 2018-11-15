@@ -32,7 +32,7 @@ package object models {
         case (Nil, _) =>
           JsError("path cannot be empty")
 
-        case ((r: RecursiveSearch) :: _, _) =>
+        case ((_: RecursiveSearch) :: _, _) =>
           JsError("recursive search not supported")
 
         case ((n: IdxPathNode) :: Nil, _) =>
@@ -41,28 +41,27 @@ package object models {
         case ((n: KeyPathNode) :: Nil, _) =>
           setKeyNode(n, jsValue, value)
 
-        case (node :: rest, oldValue) =>
-          Reads.optionNoError(Reads.at[JsValue](JsPath(node :: Nil)))
+        case (first :: second :: rest, oldValue) =>
+          Reads.optionNoError(Reads.at[JsValue](JsPath(first :: Nil)))
             .reads(oldValue).flatMap {
-              _.map {
-                  _.set(JsPath(rest), value).flatMap {
-                    newValue =>
-                      set(JsPath(node :: Nil), newValue)
-                  }
-                }.getOrElse {
-                  rest match {
+            opt =>
 
-                    case KeyPathNode(key) :: Nil =>
-                      set(JsPath(node :: Nil), Json.obj(key -> value))
-
-                    case (i: IdxPathNode) :: Nil =>
-                      set(JsPath(node :: Nil), Json.arr(value))
-
-                    case _ =>
-                      JsError("recursive search not supported")
-                  }
+              opt.map(JsSuccess(_)).getOrElse {
+                second match {
+                  case _: KeyPathNode =>
+                    JsSuccess(Json.obj())
+                  case _: IdxPathNode =>
+                    JsSuccess(Json.arr())
+                  case _: RecursiveSearch =>
+                    JsError("recursive search is not supported")
                 }
-            }
+              }.flatMap {
+                _.set(JsPath(second :: rest), value).flatMap {
+                  newValue =>
+                    oldValue.set(JsPath(first :: Nil), newValue)
+                }
+              }
+          }
       }
 
     private def setIndexNode(node: IdxPathNode, oldValue: JsValue, newValue: JsValue): JsResult[JsValue] = {

@@ -19,7 +19,7 @@ package controllers
 import controllers.actions._
 import forms.GoodsFormProvider
 import javax.inject.Inject
-import models.Mode
+import models.{Mode, UserAnswers}
 import navigation.Navigator
 import pages.GoodsPage
 import play.api.data.Form
@@ -45,31 +45,35 @@ class GoodsController @Inject()(
 
   val form = formProvider()
 
-  def onPageLoad(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData) {
+  def onPageLoad(ipoIndex: Int, goodsIndex: Int, mode: Mode): Action[AnyContent] = (identify andThen getData) {
     implicit request =>
 
-      val preparedForm = request.userAnswers.get(GoodsPage) match {
+      val userAnswers =
+        request.userAnswers.getOrElse(UserAnswers(request.internalId))
+
+      val preparedForm = userAnswers.get(GoodsPage(ipoIndex, goodsIndex)) match {
         case None => form
         case Some(value) => form.fill(value)
       }
 
-      Ok(view(preparedForm, mode))
+      Ok(view(ipoIndex, goodsIndex, preparedForm, mode))
   }
 
-  def onSubmit(mode: Mode): Action[AnyContent] = (identify andThen getData andThen requireData).async {
+  def onSubmit(ipoIndex: Int, goodsIndex: Int, mode: Mode): Action[AnyContent] = (identify andThen getData).async {
     implicit request =>
+
+      val userAnswers =
+        request.userAnswers.getOrElse(UserAnswers(request.internalId))
 
       form.bindFromRequest().fold(
         (formWithErrors: Form[_]) =>
-          Future.successful(BadRequest(view(formWithErrors, mode))),
+          Future.successful(BadRequest(view(ipoIndex, goodsIndex, formWithErrors, mode))),
 
         value => {
-          val updatedAnswers = request.userAnswers.set(GoodsPage, value)
-
-          sessionRepository.set(updatedAnswers.userData).map(
-            _ =>
-              Redirect(navigator.nextPage(GoodsPage, mode)(updatedAnswers))
-          )
+          for {
+            updatedAnswers <- Future.fromTry(userAnswers.set(GoodsPage(ipoIndex, goodsIndex), value))
+            _              <- sessionRepository.set(updatedAnswers)
+          } yield Redirect(navigator.nextPage(GoodsPage(ipoIndex, goodsIndex), mode)(updatedAnswers))
         }
       )
   }

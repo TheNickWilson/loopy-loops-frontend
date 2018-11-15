@@ -18,11 +18,10 @@ package controllers
 
 import base.SpecBase
 import forms.IpoFormProvider
-import models.{NormalMode, UserData}
+import models.{NormalMode, UserAnswers}
 import navigation.{FakeNavigator, Navigator}
 import pages.IpoPage
 import play.api.inject.bind
-import play.api.libs.json.{JsString, Json}
 import play.api.mvc.Call
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -35,13 +34,15 @@ class IpoControllerSpec extends SpecBase {
   val formProvider = new IpoFormProvider()
   val form = formProvider()
 
-  lazy val ipoRoute = routes.IpoController.onPageLoad(NormalMode).url
+  val ipoIndex = 0
+
+  lazy val ipoRoute = routes.IpoController.onPageLoad(ipoIndex, NormalMode).url
 
   "Ipo Controller" must {
 
     "return OK and the correct view for a GET" in {
 
-      val application = applicationBuilder(userData = Some(emptyUserData)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
 
       val request = FakeRequest(GET, ipoRoute)
 
@@ -52,14 +53,14 @@ class IpoControllerSpec extends SpecBase {
       status(result) mustEqual OK
 
       contentAsString(result) mustEqual
-        view(form, NormalMode)(fakeRequest, messages).toString
+        view(ipoIndex, form, NormalMode)(fakeRequest, messages).toString
     }
 
     "populate the view correctly on a GET when the question has previously been answered" in {
 
-      val userData = UserData(userDataId, Json.obj(IpoPage.toString -> JsString("answer")))
+      val userAnswers = UserAnswers(userDataId).set(IpoPage(ipoIndex), "answer").success.value
 
-      val application = applicationBuilder(userData = Some(userData)).build()
+      val application = applicationBuilder(userAnswers = Some(userAnswers)).build()
 
       val request = FakeRequest(GET, ipoRoute)
 
@@ -70,13 +71,13 @@ class IpoControllerSpec extends SpecBase {
       status(result) mustEqual OK
 
       contentAsString(result) mustEqual
-        view(form.fill("answer"), NormalMode)(fakeRequest, messages).toString
+        view(ipoIndex, form.fill("answer"), NormalMode)(fakeRequest, messages).toString
     }
 
     "redirect to the next page when valid data is submitted" in {
 
       val application =
-        applicationBuilder(userData = Some(emptyUserData))
+        applicationBuilder(userAnswers = Some(emptyUserAnswers))
           .overrides(bind[Navigator].toInstance(new FakeNavigator(onwardRoute)))
           .build()
 
@@ -92,7 +93,7 @@ class IpoControllerSpec extends SpecBase {
 
     "return a Bad Request and errors when invalid data is submitted" in {
 
-      val application = applicationBuilder(userData = Some(emptyUserData)).build()
+      val application = applicationBuilder(userAnswers = Some(emptyUserAnswers)).build()
 
       val request =
         FakeRequest(POST, ipoRoute)
@@ -107,12 +108,12 @@ class IpoControllerSpec extends SpecBase {
       status(result) mustEqual BAD_REQUEST
 
       contentAsString(result) mustEqual
-        view(boundForm, NormalMode)(fakeRequest, messages).toString
+        view(ipoIndex, boundForm, NormalMode)(fakeRequest, messages).toString
     }
 
     "return OK for a GET if no existing data is found" in {
 
-      val application = applicationBuilder(userData = None).build()
+      val application = applicationBuilder(userAnswers = None).build()
 
       val request = FakeRequest(GET, ipoRoute)
 
@@ -124,7 +125,7 @@ class IpoControllerSpec extends SpecBase {
     "redirect to the next page for a POST if no existing data is found" in {
 
       val application =
-        applicationBuilder(userData = None)
+        applicationBuilder(userAnswers = None)
           .overrides(bind[Navigator].toInstance(new FakeNavigator(onwardRoute)))
           .build()
 

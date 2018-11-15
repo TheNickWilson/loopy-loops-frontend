@@ -23,10 +23,10 @@ class IpoPageSpec extends PageBehaviours {
 
   "IpoPage" must {
 
-    beRetrievable[String](IpoPage)
+    beRetrievable[String](IpoPage(0))
 
-    beSettable[String](IpoPage)
+    beSettable[String](IpoPage(0))
 
-    beRemovable[String](IpoPage)
+    beRemovable[String](IpoPage(0))
   }
 }
